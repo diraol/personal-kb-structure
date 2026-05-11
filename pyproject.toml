@@ -1,0 +1,29 @@
+[project]
+name = "knowldege"
+version = "0.1.0"
+description = "Local LLM-friendly knowledge base — markdown vault + hybrid retrieval"
+requires-python = ">=3.11"
+dependencies = [
+    "python-frontmatter>=1.1.0",
+    "lancedb>=0.13.0",
+    "ollama>=0.4.0",
+    "watchfiles>=0.24.0",
+    "mcp>=1.2.0",
+    "pyarrow>=17.0.0",
+    "click>=8.1.7",
+    "pydantic>=2.9.0",
+]
+
+[project.scripts]
+kb-index = "kb.cli:index_cmd"
+kb-search = "kb.cli:search_cmd"
+kb-new = "kb.cli:new_cmd"
+kb-watch = "kb.cli:watch_cmd"
+kb-server = "kb.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kb"]

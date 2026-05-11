@@ -1,0 +1,17 @@
+[Unit]
+Description=knowldege vault watcher — incremental reindex on save
+Documentation=https://github.com/diraol/knowldege
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/dev/knowldege
+ExecStart=%h/.local/bin/uv run --project %h/dev/knowldege kb-watch
+Restart=on-failure
+RestartSec=5s
+StandardOutput=append:%h/.local/state/kb-watch.log
+StandardError=append:%h/.local/state/kb-watch.log
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

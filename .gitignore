@@ -1,0 +1,38 @@
+# Generated indexes — rebuildable from vault/
+index/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.uv/
+*.egg-info/
+dist/
+build/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Obsidian (workspace state, plugins — keep settings out of git)
+.obsidian/workspace*
+.obsidian/cache
+.obsidian/appearance.json
+
+# Logs
+*.log
+
+# Claude Code per-project state
+.claude/settings.local.json
+.tmp/
