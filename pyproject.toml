@@ -1,5 +1,5 @@
 [project]
-name = "knowldege"
+name = "kb"
 version = "0.1.0"
 description = "Local LLM-friendly knowledge base — markdown vault + hybrid retrieval"
 requires-python = ">=3.11"

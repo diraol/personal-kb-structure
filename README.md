@@ -1,4 +1,4 @@
-# knowldege — local LLM-friendly knowledge base
+# kb — local LLM-friendly knowledge base
 
 Markdown vault + hybrid (keyword + semantic) retrieval, exposed to Claude Code via an MCP server. Notes are the source of truth; indexes are rebuildable.
 
@@ -29,8 +29,8 @@ Every `.md` file under `vault/` has YAML frontmatter — see [`vault/_meta/front
 ## Bootstrap a fresh machine
 
 ```bash
-git clone git@github.com:nubank/diraol-personal-kb.git ~/dev/knowldege
-cd ~/dev/knowldege
+git clone git@github.com:nubank/diraol-personal-kb.git ~/kb
+cd ~/kb
 ./bootstrap.sh                     # uv sync + ollama check + index + claude wiring + watcher
 ```
 
@@ -46,7 +46,7 @@ Then **restart Claude Code** so the `kb` MCP server and hooks load.
 
 ```bash
 uv run kb-search "datomic cas"     # CLI hybrid search
-uv run kb-new decision foo --project knowldege
+uv run kb-new decision foo --project kb
 uv run kb-index                    # incremental reindex (the watcher does this for you)
 ```
 

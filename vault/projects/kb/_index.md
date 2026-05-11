@@ -1,8 +1,8 @@
 ---
-id: project-knowldege-index
+id: project-kb-index
 type: project
-project: knowldege
-title: Knowldege Vault
+project: kb
+title: Knowledge Vault
 tags: []
 sources: []
 related: []
@@ -11,7 +11,7 @@ updated: 2026-05-11
 status: active
 ---
 
-# Knowldege Vault
+# Knowledge Vault
 
 > One-paragraph elevator pitch — what this project is and why it exists.
 > This file is auto-loaded at session start when cwd matches this project, so keep it tight (≤ 30 lines).

@@ -53,7 +53,7 @@ def merge_hooks(target_hooks: dict, new_hooks: dict) -> tuple[dict, list[str]]:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]),
-                   help="Path to the knowldege repo (KB_ROOT).")
+                   help="Path to the kb repo (KB_ROOT).")
     p.add_argument("--settings", default=str(Path.home() / ".claude" / "settings.json"),
                    help="Target settings.json path.")
     p.add_argument("--snippet", default=str(Path(__file__).with_name("settings.snippet.json")),

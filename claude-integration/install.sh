@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wire the knowldege vault into Claude Code:
+# Wire the kb vault into Claude Code:
 #   - symlink skills/hooks from the repo into ~/.claude/{skills,hooks}/
 #   - merge MCP server + hook entries into ~/.claude/settings.json (with backup)
 #

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bootstrap the knowldege vault on a fresh machine.
+# Bootstrap the kb vault on a fresh machine.
 #
 # Steps:
 #   1. uv sync           — install Python deps

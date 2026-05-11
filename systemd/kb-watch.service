@@ -1,12 +1,12 @@
 [Unit]
-Description=knowldege vault watcher — incremental reindex on save
-Documentation=https://github.com/diraol/knowldege
+Description=kb vault watcher — incremental reindex on save
+Documentation=https://github.com/nubank/diraol-personal-kb
 After=default.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/dev/knowldege
-ExecStart=%h/.local/bin/uv run --project %h/dev/knowldege kb-watch
+WorkingDirectory=%h/kb
+ExecStart=%h/.local/bin/uv run --project %h/kb kb-watch
 Restart=on-failure
 RestartSec=5s
 StandardOutput=append:%h/.local/state/kb-watch.log

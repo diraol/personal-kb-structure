@@ -1,7 +1,7 @@
 ---
 name: kb-capture
 description: |
-  Append a new note to the local knowldege vault (memory, decision, gotcha, or
+  Append a new note to the local kb vault (memory, decision, gotcha, or
   reference). Use when the user shares something worth carrying into future sessions:
   a decision was made, a non-obvious behavior was discovered, a useful external
   resource was identified, or a fact about how the user works/thinks is revealed.

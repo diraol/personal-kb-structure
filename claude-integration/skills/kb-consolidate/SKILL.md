@@ -36,8 +36,8 @@ Sweep the current conversation for material worth persisting and write it to the
 2. **Cluster by type** and propose a short list:
    ```
    Proposed captures:
-   1. decision · "Use LanceDB for vector store" (project: knowldege)
-   2. gotcha   · "Ollama embed dim 768 differs from default 1024" (project: knowldege)
+   1. decision · "Use LanceDB for vector store" (project: kb)
+   2. gotcha   · "Ollama embed dim 768 differs from default 1024" (project: kb)
    3. memory   · "User prefers files-first over server-first architecture"
    ```
    Ask the user to confirm / drop / merge before writing.

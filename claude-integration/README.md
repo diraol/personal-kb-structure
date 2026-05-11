@@ -8,7 +8,7 @@ updated: 2026-05-11
 
 # Claude Code integration
 
-Everything Claude Code needs to use the knowldege vault — vendored here so a fresh
+Everything Claude Code needs to use the kb vault — vendored here so a fresh
 machine can bootstrap with `git clone && ./bootstrap.sh`.
 
 ## Layout
@@ -65,7 +65,7 @@ Restart Claude Code. The new MCP server and hooks load on the next session.
 
 To verify:
 - `claude --debug` shows `kb` in the mcpServers list at startup.
-- `cd ~/dev/knowldege && claude` should inject the project index via SessionStart.
+- `cd ~/kb && claude` should inject the project index via SessionStart.
 
 ## Uninstalling
 

@@ -9,7 +9,7 @@
 
 set -uo pipefail
 
-VAULT="${KB_VAULT:-$HOME/dev/knowldege/vault}"
+VAULT="${KB_VAULT:-$HOME/kb/vault}"
 [[ -d "$VAULT/projects" ]] || exit 0
 
 cwd="${CLAUDE_PROJECT_DIR:-$PWD}"
@@ -27,9 +27,9 @@ idx="$VAULT/projects/$slug/_index.md"
 [[ -f "$idx" ]] || exit 0
 
 cat <<EOF
-<knowldege-project-context project="$slug" source="$idx">
+<kb-project-context project="$slug" source="$idx">
 $(cat "$idx")
-</knowldege-project-context>
+</kb-project-context>
 
 (Tip: use kb_search / kb-search skill for deeper retrieval. Use kb_capture / kb-capture to persist new learnings.)
 EOF

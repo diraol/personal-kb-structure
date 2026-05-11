@@ -1,7 +1,7 @@
 ---
 name: kb-search
 description: |
-  Retrieve contextualized knowledge from the local knowldege vault (markdown notes
+  Retrieve contextualized knowledge from the local kb vault (markdown notes
   indexed with hybrid FTS5 + semantic search). Use this BEFORE asking the user for
   project context, conventions, past decisions, gotchas, or external reference info —
   the vault likely already has it. Triggers on: "what do we know about X",
@@ -17,7 +17,7 @@ category: knowledge
 
 # kb-search
 
-Query the local knowldege vault via the `kb_*` MCP tools. The vault contains four
+Query the local kb vault via the `kb_*` MCP tools. The vault contains four
 classes of notes:
 
 - **project** — per-project context (architecture, decisions, gotchas, sessions)

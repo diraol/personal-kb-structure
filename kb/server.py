@@ -1,4 +1,4 @@
-"""MCP server exposing the knowldege vault to Claude Code.
+"""MCP server exposing the kb vault to Claude Code.
 
 Tools:
   kb_search          — hybrid (FTS5 + semantic) retrieval
@@ -26,7 +26,7 @@ from kb import fts, indexer, search
 from kb.config import VAULT_DIR, VALID_TYPES
 
 
-app = Server("knowldege")
+app = Server("kb")
 
 _CAPTURE_TYPES = {"memory", "decision", "gotcha", "reference"}
 
@@ -86,7 +86,7 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="kb_search",
             description=(
-                "Hybrid keyword + semantic search across the knowldege vault. Returns ranked "
+                "Hybrid keyword + semantic search across the kb vault. Returns ranked "
                 "note chunks with title, path, type, project, section, snippet. Use this BEFORE "
                 "asking the user for project context — the vault likely already has it."
             ),

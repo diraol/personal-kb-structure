@@ -1,7 +1,7 @@
 ---
 id: gotcha-datomic-cas-stale
 type: gotcha
-project: knowldege
+project: kb
 title: Datomic CAS conflict on stale read
 tags: [gotcha]
 sources: []
