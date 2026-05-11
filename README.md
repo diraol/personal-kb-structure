@@ -17,30 +17,51 @@ index/                  generated, gitignored
   vectors.lance/        LanceDB (semantic via Ollama nomic-embed-text)
 
 kb/                     Python package (indexer, MCP server, embeddings)
-bin/                    CLI entrypoints (kb-index, kb-search, kb-watch, kb-new)
+claude-integration/     skills, hooks, settings snippet, install.sh
+systemd/                kb-watch.service + install.sh
+bootstrap.sh            fresh-machine end-to-end installer
 ```
 
 ## Note conventions
 
 Every `.md` file under `vault/` has YAML frontmatter — see [`vault/_meta/frontmatter.md`](vault/_meta/frontmatter.md). Wikilinks (`[[note-name]]`) build the backlink graph.
 
-## Quickstart
+## Bootstrap a fresh machine
 
 ```bash
-uv sync                            # install Python deps
-ollama pull nomic-embed-text       # one-time
-uv run kb-index                    # build/refresh indexes
-uv run kb-search "datomic cas"     # CLI hybrid search
+git clone git@github.com:nubank/diraol-personal-kb.git ~/dev/knowldege
+cd ~/dev/knowldege
+./bootstrap.sh                     # uv sync + ollama check + index + claude wiring + watcher
+```
 
-# Background watcher (incremental reindex on save)
-systemctl --user enable --now kb-watch
+Skipping pieces:
+```bash
+./bootstrap.sh --no-watcher        # don't enable systemd unit
+./bootstrap.sh --no-embeddings     # FTS-only (no Ollama needed)
+```
+
+Then **restart Claude Code** so the `kb` MCP server and hooks load.
+
+## Day-to-day
+
+```bash
+uv run kb-search "datomic cas"     # CLI hybrid search
+uv run kb-new decision foo --project knowldege
+uv run kb-index                    # incremental reindex (the watcher does this for you)
 ```
 
 ## Claude Code integration
 
+Vendored in [`claude-integration/`](claude-integration/) — see its README for details.
+
 - **MCP server** `kb` exposes `kb_search`, `kb_get`, `kb_recent`, `kb_related`, `kb_capture`, `kb_list_projects`.
-- **Skills** `kb-search`, `kb-capture`, `kb-consolidate` (in `~/.claude/skills/`).
-- **Hooks** SessionStart injects current project's `_index.md`; Stop prompts consolidation after substantive sessions.
+- **Skills** `kb-search`, `kb-capture`, `kb-consolidate` (symlinked into `~/.claude/skills/`).
+- **Hooks** SessionStart injects current project's `_index.md`; Stop nudges `/kb-consolidate` after vault sessions.
+
+Re-apply the wiring after `git pull`:
+```bash
+./claude-integration/install.sh    # idempotent — safe to re-run
+```
 
 ## Adding notes
 

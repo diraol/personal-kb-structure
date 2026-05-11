@@ -1,0 +1,33 @@
+{
+  "_comment": "Merged into ~/.claude/settings.json by claude-integration/install.sh. ${HOME} and ${KB_ROOT} are substituted at install time. Idempotent merge: skips entries whose `command` already exists.",
+  "mcpServers": {
+    "kb": {
+      "command": "${HOME}/.local/bin/uv",
+      "args": ["run", "--project", "${KB_ROOT}", "kb-server"]
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${HOME}/.claude/hooks/kb-session-context.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${HOME}/.claude/hooks/kb-stop-prompt.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
