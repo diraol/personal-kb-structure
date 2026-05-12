@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# Health check for the kb vault stack.
+# Usage: ./bin/kb-health
+set -euo pipefail
+
+REPO="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+cd "$REPO"
+
+ok=0; fail=0
+check() {
+  local label="$1" status="$2" detail="${3:-}"
+  if [[ "$status" == "ok" ]]; then
+    printf '  ✓  %-30s %s\n' "$label" "$detail"
+    (( ok++ )) || true
+  else
+    printf '  ✗  %-30s %s\n' "$label" "$detail" >&2
+    (( fail++ )) || true
+  fi
+}
+
+echo "━━━ watcher ━━━"
+if systemctl --user is-active kb-watch.service >/dev/null 2>&1; then
+  check "kb-watch.service" ok "$(systemctl --user show kb-watch.service --property=MainPID --value | xargs -I{} ps -p {} -o pid= -o etime= 2>/dev/null | head -1 || echo "")"
+else
+  check "kb-watch.service" fail "not running — systemctl --user start kb-watch"
+fi
+
+echo
+echo "━━━ ollama / embeddings ━━━"
+if command -v ollama >/dev/null 2>&1; then
+  if ollama list 2>/dev/null | grep -q "nomic-embed-text"; then
+    if uv run python -c "from kb.embed import health; ok, _ = health(); exit(0 if ok else 1)" 2>/dev/null; then
+      check "nomic-embed-text" ok "reachable"
+    else
+      check "nomic-embed-text (daemon)" fail "ollama is installed but not responding — is 'ollama serve' running?"
+    fi
+  else
+    check "nomic-embed-text" fail "not pulled — run: ollama pull nomic-embed-text"
+  fi
+else
+  check "ollama" fail "not installed — see https://ollama.com/install.sh"
+fi
+
+echo
+echo "━━━ indexes ━━━"
+uv run python - <<'PYEOF'
+import sqlite3, sys
+from kb import vector
+from kb.config import FTS_DB
+
+try:
+    con = sqlite3.connect(FTS_DB)
+    notes  = con.execute("SELECT COUNT(*) FROM notes").fetchone()[0]
+    chunks = con.execute("SELECT COUNT(*) FROM notes_fts").fetchone()[0]
+    con.close()
+    icon = "✓" if notes else "✗"
+    print(f"  {icon}  {'FTS5':<30} {notes} notes, {chunks} chunks")
+except Exception as e:
+    print(f"  ✗  {'FTS5':<30} {e}", file=sys.stderr)
+
+try:
+    n = vector.table().count_rows()
+    icon = "✓" if n else "✗"
+    print(f"  {icon}  {'LanceDB':<30} {n} vectors")
+except Exception as e:
+    print(f"  ✗  {'LanceDB':<30} {e}", file=sys.stderr)
+PYEOF
+
+echo
+echo "━━━ mcp server ━━━"
+tools=$(
+  printf '%s\n' \
+    '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"health","version":"0"}}}' \
+    '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+    '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+    | timeout 8 uv run kb-server 2>/dev/null \
+    | python3 -c "
+import sys, json
+for line in sys.stdin:
+    d = json.loads(line)
+    if d.get('id') == 2:
+        print(','.join(t['name'] for t in d['result']['tools']))
+" 2>/dev/null
+)
+if [[ -n "$tools" ]]; then
+  check "kb-server" ok "$tools"
+else
+  check "kb-server" fail "failed to start — run: uv run kb-server"
+fi
+
+echo
+echo "━━━ settings.json ━━━"
+mcp_path=$(python3 -c "
+import json
+d = json.load(open('$HOME/.claude/settings.json'))
+kb = d.get('mcpServers', {}).get('kb')
+if kb:
+    print(' '.join(kb.get('args', [])))
+" 2>/dev/null)
+if [[ "$mcp_path" == *"$REPO"* ]]; then
+  check "mcpServers.kb" ok "$mcp_path"
+else
+  check "mcpServers.kb" fail "missing or wrong path — run: ./claude-integration/install.sh"
+fi
+
+echo
+echo "━━━ symlinks ━━━"
+for entry in \
+  "skill:kb-search:$HOME/.claude/skills/kb-search" \
+  "skill:kb-capture:$HOME/.claude/skills/kb-capture" \
+  "skill:kb-consolidate:$HOME/.claude/skills/kb-consolidate" \
+  "hook:kb-session-context.sh:$HOME/.claude/hooks/kb-session-context.sh" \
+  "hook:kb-stop-prompt.sh:$HOME/.claude/hooks/kb-stop-prompt.sh"; do
+  IFS=: read -r kind name path <<< "$entry"
+  if [[ -L "$path" && -e "$path" ]]; then
+    check "$kind/$name" ok "→ $(readlink "$path")"
+  else
+    check "$kind/$name" fail "broken or missing — run: ./claude-integration/install.sh"
+  fi
+done
+
+echo
+echo "━━━ session hook ━━━"
+output=$(CLAUDE_PROJECT_DIR="$REPO" bash "$REPO/claude-integration/hooks/kb-session-context.sh" 2>/dev/null | head -1)
+if [[ "$output" == "<kb-project-context"* ]]; then
+  check "SessionStart hook" ok "injects project context for $(basename "$REPO")"
+else
+  check "SessionStart hook" fail "no output — ensure vault/projects/$(basename "$REPO")/_index.md exists"
+fi
+
+echo
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if (( fail == 0 )); then
+  printf '  All %d checks passed.\n' "$ok"
+else
+  printf '  %d passed, %d failed.\n' "$ok" "$fail"
+  exit 1
+fi
