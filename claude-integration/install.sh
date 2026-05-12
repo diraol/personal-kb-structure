@@ -69,5 +69,24 @@ else
 fi
 
 log
+log "[CLAUDE.md]"
+CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
+SNIPPET="$REPO/claude-integration/claude.md.snippet"
+SENTINEL="## Knowledge Base (kb MCP)"
+if [[ -f "$SNIPPET" ]]; then
+  if grep -qF "$SENTINEL" "$CLAUDE_MD" 2>/dev/null; then
+    log "  ok    kb section already present in $CLAUDE_MD"
+  elif (( DRY_RUN )); then
+    log "  plan  append kb section to $CLAUDE_MD"
+  else
+    printf '\n' >> "$CLAUDE_MD"
+    cat "$SNIPPET" >> "$CLAUDE_MD"
+    log "  added kb section to $CLAUDE_MD"
+  fi
+else
+  warn "claude.md.snippet not found, skipping CLAUDE.md merge"
+fi
+
+log
 log "[done]  Restart Claude Code to load the kb MCP server and hooks."
 log "        Verify:  claude --debug    (look for 'kb' in mcpServers)"

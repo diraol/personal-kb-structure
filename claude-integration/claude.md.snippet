@@ -1,0 +1,17 @@
+## Knowledge Base (kb MCP)
+
+The `kb` MCP server exposes a local markdown vault at `~/kb/vault/` with hybrid FTS + semantic search.
+Tools: `kb_search`, `kb_get`, `kb_related`, `kb_recent`, `kb_capture`, `kb_list_projects`.
+
+**Use proactively — before asking the user for context:**
+- Session start in any project → search for `_index.md` or recent session notes
+- Before recommending an approach → check for existing decisions or gotchas
+- Unknown service, system, or acronym → search the vault first
+- Consult by type: `type=decision` for ADRs, `type=gotcha` for surprising behaviors, `project=<slug>` to scope
+
+**Workflow:**
+1. `kb_search(query)` — start broad, then add `type`/`project`/`tag` filters
+2. `kb_get(id)` — fetch the full note for top hits (snippets omit body detail)
+3. `kb_related(id)` — walk backlinks; neighboring notes often have the real answer
+
+**At session end:** use `/kb-consolidate` (or `kb-consolidate` skill) to persist decisions, gotchas, and learnings into the vault.
