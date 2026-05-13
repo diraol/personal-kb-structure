@@ -2,15 +2,29 @@
 
 Markdown vault + hybrid (keyword + semantic) retrieval, exposed to Claude Code via an MCP server. Notes are the source of truth; indexes are rebuildable.
 
+## Two-repo design
+
+This repo (**structure**) contains the infrastructure and is machine-agnostic.
+Vault notes live in a **separate repo** cloned into `vault/`:
+
+| Repo | Contains | Tracked by git |
+|------|----------|----------------|
+| `personal-kb-structure` (this repo) | Python package, MCP server, CLI, claude-integration, systemd, `vault/_meta/` templates | yes |
+| Per-machine vault repo (e.g. `diraol-personal-kb`) | `vault/projects/`, `vault/domains/`, `vault/memory/`, `vault/references/` | yes — in its own nested `.git/` |
+
+`vault/` on disk is a nested git repo. The structure repo gitignores note dirs;
+`vault/.gitignore` ignores `_meta/` (owned by the structure repo).
+Each machine or context uses its own vault remote — the structure repo stays shared.
+
 ## Layout
 
 ```
-vault/                  source of truth, markdown with YAML frontmatter
-  projects/<name>/      per-project: _index.md, architecture/, decisions/, gotchas/, sessions/
-  domains/              cross-project: clojure/, diplomat/, nubank-platform/, ...
-  references/           pointers: confluence/, jira/, slack/, dashboards/
-  memory/               session-accumulated: facts/, decisions/, corrections/
-  _meta/templates/      note templates
+vault/                  split across two repos (see above)
+  _meta/                ← structure repo: templates, tags, frontmatter spec
+  projects/<name>/      ← vault repo: per-project notes
+  domains/              ← vault repo: cross-project concepts
+  references/           ← vault repo: pointers to external systems
+  memory/               ← vault repo: session-accumulated learnings
 
 index/                  generated, gitignored
   fts.sqlite            SQLite FTS5 (keyword)
@@ -29,15 +43,26 @@ Every `.md` file under `vault/` has YAML frontmatter — see [`vault/_meta/front
 ## Bootstrap a fresh machine
 
 ```bash
-git clone git@github.com:nubank/diraol-personal-kb.git ~/kb
+git clone git@github.com:diraol/personal-kb-structure.git ~/kb
 cd ~/kb
-./bootstrap.sh                     # uv sync + ollama check + index + claude wiring + watcher
+
+# With your vault repo (recommended):
+./bootstrap.sh --vault-repo git@github.com:YOUR-ORG/YOUR-vault-repo.git
+
+# Without a vault (empty, local-only notes):
+./bootstrap.sh
 ```
 
 Skipping pieces:
 ```bash
-./bootstrap.sh --no-watcher        # don't enable systemd unit
-./bootstrap.sh --no-embeddings     # FTS-only (no Ollama needed)
+./bootstrap.sh --vault-repo <url> --no-watcher        # don't enable systemd unit
+./bootstrap.sh --vault-repo <url> --no-embeddings     # FTS-only (no Ollama needed)
+```
+
+Day-to-day vault git operations:
+```bash
+git -C ~/kb/vault pull                          # pull latest notes
+git -C ~/kb/vault add . && git -C ~/kb/vault commit -m "notes: ..." && git -C ~/kb/vault push
 ```
 
 Then **restart Claude Code** so the `kb` MCP server and hooks load.

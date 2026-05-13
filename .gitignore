@@ -1,5 +1,12 @@
 # Generated indexes — rebuildable from vault/
 index/
+
+# Vault notes — tracked in the separate vault repo (see README)
+# vault/_meta/ stays here as shared structure/templates
+vault/projects/
+vault/domains/
+vault/memory/
+vault/references/
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

@@ -1,0 +1,3 @@
+# _meta/ is managed by the structure repo (personal-kb-structure)
+# and lives on disk via the parent repo checkout — do not track here
+_meta/
