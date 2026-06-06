@@ -26,13 +26,15 @@ cd "$REPO"
 
 WANT_WATCHER=1
 WANT_EMBED=1
+WANT_MCP_DAEMON=1
 VAULT_REPO=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --no-watcher)    WANT_WATCHER=0 ;;
-    --no-embeddings) WANT_EMBED=0 ;;
-    --vault-repo)    shift; VAULT_REPO="${1:-}" ;;
-    --vault-repo=*)  VAULT_REPO="${1#--vault-repo=}" ;;
+    --no-watcher)     WANT_WATCHER=0 ;;
+    --no-embeddings)  WANT_EMBED=0 ;;
+    --no-mcp-daemon)  WANT_MCP_DAEMON=0 ;;
+    --vault-repo)     shift; VAULT_REPO="${1:-}" ;;
+    --vault-repo=*)   VAULT_REPO="${1#--vault-repo=}" ;;
     -h|--help)
       sed -n '2,20p' "$0"
       exit 0
@@ -105,16 +107,17 @@ fi
 step "5/6  Claude Code wiring"
 "$REPO/claude-integration/install.sh"
 
-step "6/6  Watcher daemon"
-if (( WANT_WATCHER )); then
+step "6/6  Systemd services (watcher + MCP daemon)"
+if (( WANT_WATCHER )) || (( WANT_MCP_DAEMON )); then
   if command -v systemctl >/dev/null && systemctl --user --version >/dev/null 2>&1; then
     "$REPO/systemd/install.sh"
   else
-    warn "systemd --user not available; skipping watcher install."
-    warn "You can still run: uv run kb-watch (in a terminal)"
+    warn "systemd --user not available; skipping service install."
+    (( WANT_WATCHER ))    && warn "  Watcher:    uv run kb-watch  (run in a terminal)"
+    (( WANT_MCP_DAEMON )) && warn "  MCP daemon: uv run kb-server --transport http --port 3333"
   fi
 else
-  warn "skipped watcher (--no-watcher)"
+  warn "skipped systemd services (--no-watcher --no-mcp-daemon)"
 fi
 
 step "Done."

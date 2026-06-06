@@ -8,13 +8,19 @@ Tools:
   kb_capture         — append a new note (memory/decision/gotcha/reference)
   kb_list_projects   — enumerate project slugs
 
-Run via stdio:
+Run via stdio (default, per-session):
   uv run kb-server
+
+Run as shared HTTP daemon (recommended for multi-session):
+  uv run kb-server --transport http [--port 3333]
 """
 from __future__ import annotations
+import argparse
 import asyncio
+import contextlib
 import datetime as dt
 import json
+import os
 import re
 from pathlib import Path
 
@@ -245,8 +251,55 @@ async def _run():
         await app.run(read, write, app.create_initialization_options())
 
 
-def main():
-    asyncio.run(_run())
+class _McpAsgiApp:
+    """Thin ASGI wrapper around StreamableHTTPSessionManager."""
+    def __init__(self, manager) -> None:
+        self._manager = manager
+
+    async def __call__(self, scope, receive, send) -> None:
+        await self._manager.handle_request(scope, receive, send)
+
+
+async def _run_http(port: int) -> None:
+    import uvicorn
+    from starlette.applications import Starlette
+    from starlette.responses import JSONResponse
+    from starlette.routing import Mount, Route
+    from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+
+    manager = StreamableHTTPSessionManager(app=app, stateless=False, session_idle_timeout=1800)
+
+    async def health(_req):
+        return JSONResponse({"status": "ok", "port": port})
+
+    @contextlib.asynccontextmanager
+    async def lifespan(_app):
+        async with manager.run():
+            yield
+
+    starlette_app = Starlette(
+        routes=[
+            Route("/health", health, methods=["GET"]),
+            Mount("/mcp", _McpAsgiApp(manager)),
+        ],
+        lifespan=lifespan,
+    )
+    config = uvicorn.Config(starlette_app, host="127.0.0.1", port=port, log_level="warning")
+    await uvicorn.Server(config).serve()
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(description="kb MCP server")
+    p.add_argument("--transport", choices=["stdio", "http"], default="stdio",
+                   help="Transport mode (default: stdio)")
+    p.add_argument("--port", type=int, default=int(os.environ.get("KB_MCP_PORT", "3333")),
+                   help="HTTP port (default: 3333, or $KB_MCP_PORT)")
+    args = p.parse_args()
+
+    if args.transport == "http":
+        asyncio.run(_run_http(args.port))
+    else:
+        asyncio.run(_run())
 
 
 if __name__ == "__main__":

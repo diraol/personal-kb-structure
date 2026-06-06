@@ -6,6 +6,23 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 cd "$REPO"
 
+# Resolve uv to the real binary (not a pyenv shim)
+_resolve_uv() {
+  local bin
+  bin="$(command -v uv 2>/dev/null || true)"
+  [[ -z "$bin" ]] && return 1
+  if [[ "$bin" == *pyenv/shims/* ]]; then
+    local root="${PYENV_ROOT:-$HOME/.pyenv}"
+    bin="$(find "$root/versions" -name uv -type f 2>/dev/null | grep -v '/envs/' | sort -V | tail -1 || true)"
+    [[ -z "$bin" ]] && bin="$(find "$root/versions" -name uv -type f 2>/dev/null | sort -V | tail -1 || true)"
+  fi
+  [[ -n "$bin" ]] && echo "$bin" || return 1
+}
+UV_BIN="$(_resolve_uv || true)"
+if [[ -z "$UV_BIN" ]]; then
+  echo "ERROR: uv not found" >&2; exit 1
+fi
+
 ok=0; fail=0
 check() {
   local label="$1" status="$2" detail="${3:-}"
@@ -29,7 +46,7 @@ echo
 echo "━━━ ollama / embeddings ━━━"
 if command -v ollama >/dev/null 2>&1; then
   if ollama list 2>/dev/null | grep -q "nomic-embed-text"; then
-    if uv run python -c "from kb.embed import health; ok, _ = health(); exit(0 if ok else 1)" 2>/dev/null; then
+    if "$UV_BIN" run --project "$REPO" python -c "from kb.embed import health; ok, _ = health(); exit(0 if ok else 1)" 2>/dev/null; then
       check "nomic-embed-text" ok "reachable"
     else
       check "nomic-embed-text (daemon)" fail "ollama is installed but not responding — is 'ollama serve' running?"
@@ -43,7 +60,7 @@ fi
 
 echo
 echo "━━━ indexes ━━━"
-uv run python - <<'PYEOF'
+"$UV_BIN" run --project "$REPO" python - <<'PYEOF'
 import sqlite3, sys
 from kb import vector
 from kb.config import FTS_DB
@@ -68,39 +85,44 @@ PYEOF
 
 echo
 echo "━━━ mcp server ━━━"
-tools=$(
-  printf '%s\n' \
-    '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"health","version":"0"}}}' \
-    '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
-    '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-    | timeout 8 uv run kb-server 2>/dev/null \
-    | python3 -c "
-import sys, json
-for line in sys.stdin:
-    d = json.loads(line)
-    if d.get('id') == 2:
-        print(','.join(t['name'] for t in d['result']['tools']))
-" 2>/dev/null
-)
-if [[ -n "$tools" ]]; then
-  check "kb-server" ok "$tools"
+KB_MCP_PORT="${KB_MCP_PORT:-3333}"
+if systemctl --user is-active kb-mcp-server.service >/dev/null 2>&1; then
+  uptime="$(systemctl --user show kb-mcp-server.service --property=MainPID --value | \
+    xargs -I{} ps -p {} -o etime= 2>/dev/null | head -1 | xargs || echo "")"
+  check "kb-mcp-server.service" ok "up ${uptime}"
 else
-  check "kb-server" fail "failed to start — run: uv run kb-server"
+  check "kb-mcp-server.service" fail "not running — systemctl --user start kb-mcp-server"
+fi
+health_resp="$(curl -sf --max-time 3 "http://127.0.0.1:${KB_MCP_PORT}/health" 2>/dev/null || true)"
+if [[ -n "$health_resp" ]]; then
+  check "kb-server HTTP :${KB_MCP_PORT}" ok "$health_resp"
+else
+  check "kb-server HTTP :${KB_MCP_PORT}" fail "not responding — systemctl --user start kb-mcp-server"
 fi
 
 echo
-echo "━━━ settings.json ━━━"
-mcp_path=$(python3 -c "
-import json
-d = json.load(open('$HOME/.claude/settings.json'))
-kb = d.get('mcpServers', {}).get('kb')
-if kb:
-    print(' '.join(kb.get('args', [])))
+echo "━━━ claude.json MCP config ━━━"
+mcp_entry=$(python3 -c "
+import json, os
+path = os.path.expanduser('~/.claude.json')
+try:
+    d = json.load(open(path))
+    kb = d.get('mcpServers', {}).get('kb', {})
+    if kb.get('url'):
+        print('http:', kb['url'])
+    elif kb.get('command'):
+        print('stdio:', kb['command'], *kb.get('args', []))
+    else:
+        print('')
+except Exception as e:
+    print('error:', e)
 " 2>/dev/null)
-if [[ "$mcp_path" == *"$REPO"* ]]; then
-  check "mcpServers.kb" ok "$mcp_path"
+if [[ "$mcp_entry" == "http: http://127.0.0.1:${KB_MCP_PORT}/mcp" ]]; then
+  check "mcpServers.kb" ok "$mcp_entry"
+elif [[ "$mcp_entry" == stdio:* ]]; then
+  check "mcpServers.kb" ok "$mcp_entry  (stdio mode)"
 else
-  check "mcpServers.kb" fail "missing or wrong path — run: ./claude-integration/install.sh"
+  check "mcpServers.kb" fail "missing — run: ./claude-integration/install.sh"
 fi
 
 echo

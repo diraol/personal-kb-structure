@@ -1,0 +1,19 @@
+[Unit]
+Description=kb MCP HTTP server — shared knowledge vault daemon
+Documentation=https://github.com/nubank/diraol-personal-kb
+After=default.target
+Wants=kb-watch.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/kb
+ExecStart=@UV_BIN@ run --project %h/kb kb-server --transport http --port ${KB_MCP_PORT}
+Restart=on-failure
+RestartSec=5s
+StandardOutput=append:%h/kb/.logs/kb-mcp-server.log
+StandardError=append:%h/kb/.logs/kb-mcp-server.log
+Environment=PYTHONUNBUFFERED=1
+Environment=KB_MCP_PORT=3333
+
+[Install]
+WantedBy=default.target

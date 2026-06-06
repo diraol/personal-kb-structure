@@ -6,11 +6,11 @@ After=default.target
 [Service]
 Type=simple
 WorkingDirectory=%h/kb
-ExecStart=%h/.local/bin/uv run --project %h/kb kb-watch
+ExecStart=@UV_BIN@ run --project %h/kb kb-watch
 Restart=on-failure
 RestartSec=5s
-StandardOutput=append:%h/.local/state/kb-watch.log
-StandardError=append:%h/.local/state/kb-watch.log
+StandardOutput=append:%h/kb/.logs/kb-watch.log
+StandardError=append:%h/kb/.logs/kb-watch.log
 Environment=PYTHONUNBUFFERED=1
 
 [Install]

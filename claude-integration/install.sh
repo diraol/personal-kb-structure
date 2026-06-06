@@ -62,16 +62,34 @@ done
 
 log
 log "[MCP server]"
-UV_BIN="$(command -v uv || true)"
-if [[ -z "$UV_BIN" ]]; then
-  log "  warn  uv not found in PATH; skipping claude mcp add"
-  log "        Run manually: claude mcp add -s user kb -- <path-to-uv> run --project $REPO kb-server"
-elif (( DRY_RUN )); then
-  log "  plan  claude mcp add -s user kb -- $UV_BIN run --project $REPO kb-server"
+KB_MCP_PORT="${KB_MCP_PORT:-3333}"
+_HAS_SYSTEMD=0
+command -v systemctl >/dev/null 2>&1 && systemctl --user --version >/dev/null 2>&1 && _HAS_SYSTEMD=1
+
+if (( _HAS_SYSTEMD )); then
+  # HTTP mode: connect to the persistent daemon
+  MCP_URL="http://127.0.0.1:${KB_MCP_PORT}/mcp"
+  if (( DRY_RUN )); then
+    log "  plan  claude mcp add -s user --transport http kb $MCP_URL"
+  else
+    claude mcp remove -s user kb 2>/dev/null || true
+    claude mcp add -s user --transport http kb "$MCP_URL" 2>&1 | sed 's/^/  /' || true
+    log "  ok    kb MCP server registered as HTTP (url: $MCP_URL)"
+  fi
 else
-  claude mcp add -s user kb -- "$UV_BIN" run --project "$REPO" kb-server 2>&1 \
-    | sed 's/^/  /' || true
-  log "  ok    kb MCP server registered (scope: user)"
+  # Fallback: stdio mode (no systemd — containers, WSL without systemd, etc.)
+  UV_BIN="$(command -v uv || true)"
+  if [[ -z "$UV_BIN" ]]; then
+    log "  warn  uv not found in PATH; skipping claude mcp add"
+    log "        Run manually: claude mcp add -s user kb -- <path-to-uv> run --project $REPO kb-server"
+  elif (( DRY_RUN )); then
+    log "  plan  claude mcp add -s user kb -- $UV_BIN run --project $REPO kb-server  (stdio fallback)"
+  else
+    claude mcp remove -s user kb 2>/dev/null || true
+    claude mcp add -s user kb -- "$UV_BIN" run --project "$REPO" kb-server 2>&1 \
+      | sed 's/^/  /' || true
+    log "  ok    kb MCP server registered as stdio (systemd unavailable)"
+  fi
 fi
 
 log
