@@ -14,4 +14,6 @@ Tools: `kb_search`, `kb_get`, `kb_related`, `kb_recent`, `kb_capture`, `kb_list_
 2. `kb_get(id)` — fetch the full note for top hits (snippets omit body detail)
 3. `kb_related(id)` — walk backlinks; neighboring notes often have the real answer
 
+**Capture proactively during sessions** — don't wait for the user to ask. Call `kb_capture` on the spot whenever: a decision is made, a gotcha is found, a non-obvious behavior is discovered, or a useful reference comes up. The user explicitly prefers this over manual prompting.
+
 **At session end:** use `/kb-consolidate` (or `kb-consolidate` skill) to persist decisions, gotchas, and learnings into the vault.

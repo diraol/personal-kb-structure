@@ -2,7 +2,7 @@
 from __future__ import annotations
 from collections import defaultdict
 
-from kb import fts, vector, embed
+from kb import fts
 from kb.search_helpers import _safe_fts
 
 
@@ -25,6 +25,7 @@ def hybrid_search(
 
     vec_results: list[dict] = []
     try:
+        from kb import vector, embed
         vec = embed.embed([query])[0]
         vdb = vector.connect()
         vec_results = vector.search(vdb, vec, limit=k_vec, note_type=note_type, project=project)

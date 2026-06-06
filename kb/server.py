@@ -22,7 +22,7 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-from kb import fts, indexer, search
+from kb import fts, search
 from kb.config import VAULT_DIR, VALID_TYPES
 
 
@@ -227,6 +227,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 related=arguments.get("related", []),
             )
             target.write_text(content, encoding="utf-8")
+            from kb import indexer
             stats = indexer.reindex(paths=[target], with_embeddings=True)
             return [TextContent(type="text", text=json.dumps({
                 "path": str(target.relative_to(VAULT_DIR)),

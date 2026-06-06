@@ -61,7 +61,21 @@ for f in "$REPO"/claude-integration/hooks/*.sh; do
 done
 
 log
-log "[settings.json]"
+log "[MCP server]"
+UV_BIN="$(command -v uv || true)"
+if [[ -z "$UV_BIN" ]]; then
+  log "  warn  uv not found in PATH; skipping claude mcp add"
+  log "        Run manually: claude mcp add -s user kb -- <path-to-uv> run --project $REPO kb-server"
+elif (( DRY_RUN )); then
+  log "  plan  claude mcp add -s user kb -- $UV_BIN run --project $REPO kb-server"
+else
+  claude mcp add -s user kb -- "$UV_BIN" run --project "$REPO" kb-server 2>&1 \
+    | sed 's/^/  /' || true
+  log "  ok    kb MCP server registered (scope: user)"
+fi
+
+log
+log "[settings.json hooks]"
 if (( DRY_RUN )); then
   python3 "$REPO/claude-integration/merge-settings.py" --repo "$REPO" --dry-run
 else

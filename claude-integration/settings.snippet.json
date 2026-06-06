@@ -1,11 +1,5 @@
 {
-  "_comment": "Merged into ~/.claude/settings.json by claude-integration/install.sh. ${HOME} and ${KB_ROOT} are substituted at install time. Idempotent merge: skips entries whose `command` already exists.",
-  "mcpServers": {
-    "kb": {
-      "command": "${HOME}/.local/bin/uv",
-      "args": ["run", "--project", "${KB_ROOT}", "kb-server"]
-    }
-  },
+  "_comment": "Merged into ~/.claude/settings.json by claude-integration/install.sh. ${HOME} and ${KB_ROOT} are substituted at install time. Idempotent merge: skips entries whose `command` already exists. NOTE: mcpServers is registered via `claude mcp add --scope user` in install.sh, not via this file.",
   "hooks": {
     "SessionStart": [
       {
