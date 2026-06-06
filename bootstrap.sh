@@ -27,21 +27,22 @@ cd "$REPO"
 WANT_WATCHER=1
 WANT_EMBED=1
 VAULT_REPO=""
-for arg in "$@"; do
-  case "$arg" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --no-watcher)    WANT_WATCHER=0 ;;
     --no-embeddings) WANT_EMBED=0 ;;
     --vault-repo)    shift; VAULT_REPO="${1:-}" ;;
-    --vault-repo=*)  VAULT_REPO="${arg#--vault-repo=}" ;;
+    --vault-repo=*)  VAULT_REPO="${1#--vault-repo=}" ;;
     -h|--help)
       sed -n '2,20p' "$0"
       exit 0
       ;;
     *)
-      echo "unknown flag: $arg" >&2
+      echo "unknown flag: $1" >&2
       exit 2
       ;;
   esac
+  shift
 done
 
 step() { printf '\n\033[1m[bootstrap] %s\033[0m\n' "$*" >&2; }
