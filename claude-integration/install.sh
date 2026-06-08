@@ -54,7 +54,7 @@ done
 
 log
 log "[hooks]"
-for f in "$REPO"/claude-integration/hooks/*.sh; do
+for f in "$REPO"/agent-integration/hooks/claude/*.sh; do
   name="$(basename "$f")"
   chmod +x "$f"
   ensure_link "$f" "$HOOKS_DST/$name"

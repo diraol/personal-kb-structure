@@ -1,0 +1,29 @@
+{
+  "_comment": "Merged into ~/.codex/hooks.json by agent-integration/install-codex.sh. ${CODEX_DIR} is substituted at install time. Idempotent merge: skips entries whose `command` already exists.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CODEX_DIR}/hooks/kb_session_context.py",
+            "timeout": 5,
+            "statusMessage": "Loading KB project context"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CODEX_DIR}/hooks/kb_stop_prompt.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

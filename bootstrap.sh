@@ -104,8 +104,14 @@ else
   uv run kb-index --full --no-embeddings
 fi
 
-step "5/6  Claude Code wiring"
+step "5/6  Agent wiring"
 "$REPO/claude-integration/install.sh"
+if command -v codex >/dev/null 2>&1; then
+  "$REPO/agent-integration/install-codex.sh"
+else
+  warn "codex not found in PATH — skipping Codex wiring."
+  warn "  Run manually: $REPO/agent-integration/install-codex.sh"
+fi
 
 step "6/6  Systemd services (watcher + MCP daemon)"
 if (( WANT_WATCHER )) || (( WANT_MCP_DAEMON )); then
