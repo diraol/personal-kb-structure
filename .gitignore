@@ -3,9 +3,12 @@ index/
 
 # Vault notes — tracked in the separate vault repo (see README)
 # vault/_meta/ stays here as shared structure/templates
-vault/projects/
+vault/.github/
+vault/.gitignore
 vault/domains/
+vault/gotchas/
 vault/memory/
+vault/projects/
 vault/references/
 *.sqlite
 *.sqlite-journal
@@ -21,6 +24,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.python-version
 
 # Editor
 .vscode/
